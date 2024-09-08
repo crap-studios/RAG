@@ -31,7 +31,7 @@ class PostViewSets(ModelViewSet):
         return Response({"message": "User posts", "data": serializer.data}, status=200)
 
     @action(detail=False, methods=["GET"])
-    def following(self, request):
+    def feed(self, request):
         web3_user = Web3User.objects.get(user=request.user)
         followers = web3_user.followers.all()
         follower_ids = [follower.id for follower in followers]
@@ -67,16 +67,18 @@ class ImageNFTViewSets(ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         web3_user = Web3User.objects.get(user=request.user)
-        # txn = super().create(request, *args, **kwargs)
+        txn = super().create(request, *args, **kwargs)
 
         raw_txn = self.contract.functions.addPrompt(
-            web3_user.ethereum_address, request.data["prompt"]
-        ).buildTransaction(
+            request.data["prompt"], txn.data["id"]
+        ).build_transaction(
             {
-                "chainId": 6969,
+                "chainId": 696969,
                 "gas": 2000000,
-                "gasPrice": self.w3.toWei("20", "gwei"),
-                "nonce": self.w3.eth.get_transaction_count(web3_user.ethereum_address),
+                "gasPrice": self.w3.to_wei("20", "gwei"),
+                "nonce": self.w3.eth.get_transaction_count(
+                    self.w3.to_checksum_address(web3_user.ethereum_address)
+                ),
             }
         )
 
@@ -84,9 +86,57 @@ class ImageNFTViewSets(ModelViewSet):
             {
                 "message": "Image NFT created",
                 "data": {
-                    # "image": txn,
+                    "image": txn.data,
                     "raw_txn": raw_txn,
                 },
             },
             status=201,
         )
+
+    @action(detail=True, methods=["POST"])
+    def generate(self, request):
+        signed_txn = request.data.get("signed_txn")
+        image_id = request.data.get("image_id")
+
+        if not image_id or not signed_txn:
+            return Response({"message": "Invalid request"}, status=400)
+
+        try:
+            img_txn = ImagePromptTransaction.objects.get(id=image_id)
+            img_txn.status = "processing"
+            img_txn.save()
+        except ImagePromptTransaction.DoesNotExist:
+            return Response({"message": "Invalid transaction"}, status=400)
+
+        txn_hash = self.w3.eth.send_raw_transaction(signed_txn)
+        print(txn_hash)
+        print(txn_hash.hex())
+
+        return Response(
+            {"message": "Image NFT generated"},
+            status=200,
+        )
+
+    @action(detail=True, methods=["POST"])
+    def mint(self, request):
+        web3_user = Web3User.objects.get(user=request.user)
+        image_id = request.data.get("image_id")
+        txn = ImagePromptTransaction.objects.get(id=image_id)
+        post = Post.objects.create(
+            user=web3_user,
+            content_type="image",
+            token_id=txn.token_id,
+            content=txn.response,
+        )
+
+        serializer = PostSerializer(post)
+
+        return Response(
+            {"message": "Image NFT minted", "data": serializer.data},
+            status=201,
+        )
+
+    def retrieve(self, request, *args, **kwargs):
+        img = super().retrieve(request, *args, **kwargs)
+
+        return Response({"message": "Image NFT", "data": img.data}, status=200)

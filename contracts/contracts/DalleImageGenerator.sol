@@ -20,11 +20,13 @@ contract DalleImageGenerator is ERC721URIStorage {
     event PromptAdded(string indexed taskId);
 
     // Event emitted when the prompt is replied
-    event PromptReplied(uint indexed promptId);
+    event PromptReplied(string indexed promptId);
 
     mapping(uint => string) public prompts;
     mapping (uint => string) public promptResponses;
     mapping(string => uint) public tasks;
+    mapping (uint=>uint) promptIdToTokenId;
+    mapping(uint => string) promptIdToTaskId;
 
     // Event emitted when the oracle address is updated
     event OracleAddressUpdated(address indexed newOracleAddress);
@@ -62,6 +64,7 @@ contract DalleImageGenerator is ERC721URIStorage {
     function addPrompt(string memory prompt, string memory taskId) public {
         uint promptId = _promptId;
         tasks[taskId] = _promptId;
+        promptIdToTaskId[promptId] = taskId;
         prompts[promptId] = prompt;
         IOracle(oracleAddress).createFunctionCall(
             _promptId,
@@ -83,12 +86,20 @@ contract DalleImageGenerator is ERC721URIStorage {
         _mint(promptIdToAddress[promptId], tokenCounter);
         _setTokenURI(tokenCounter, response);
         tokenCounter++;
-        emit PromptReplied(promptId);
+        _mint(promptIdToAddress[promptId], tokenCounter);
+        _setTokenURI(tokenCounter, response);
+        promptIdToTokenId[promptId] = tokenCounter;
+        tokenCounter++;
+        emit PromptReplied(promptIdToTaskId[promptId]);
     }
 
 
-    function getImage(uint promptId) public view returns (string memory) {
-        return promptResponses[promptId];
+    function getImage(string memory taskId) public view returns (string memory) {
+        return promptResponses[tasks[taskId]];
+    }
+
+    function getTokenId(string memory taskId) public view returns (uint) {
+        return promptIdToTokenId[tasks[taskId]];
     }
 
 }

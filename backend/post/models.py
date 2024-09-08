@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 
 from user.models import Web3User
@@ -15,7 +17,9 @@ class Post(models.Model):
 
 
 class ImagePromptTransaction(models.Model):
-    id = models.UUIDField(primary_key=True, editable=False)
+    id = models.UUIDField(
+        default=uuid.uuid4, unique=True, primary_key=True, editable=False
+    )
     user = models.ForeignKey(Web3User, on_delete=models.CASCADE)
     prompt = models.TextField(blank=False, null=False)
     status = models.CharField(
@@ -27,6 +31,7 @@ class ImagePromptTransaction(models.Model):
         ],
         default="created",
     )
+    token_id = models.IntegerField(blank=True, null=True)
     response = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

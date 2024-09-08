@@ -1,0 +1,6 @@
+[submodule "NFT-Notary"]
+	path = NFT-Notary
+	url = https://github.com/crap-studios/NFT-Notary.git
+[submodule "CrossChainNFT"]
+	path = CrossChainNFT
+	url = https://github.com/crap-studios/CrossChainNFT.git

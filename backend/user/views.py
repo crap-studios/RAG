@@ -9,7 +9,6 @@ from web3 import Web3
 from eth_account.messages import encode_defunct
 
 from django.contrib.auth.models import User
-from django.contrib.auth import login
 from .models import Web3User
 
 from .serializers import Web3UserSerializer
@@ -115,5 +114,47 @@ class UserViewSets(ModelViewSet):
         serialized_users = Web3UserSerializer(web3_user)
         return Response(
             {"message": "User profile", "data": {"user": serialized_users.data}},
+            status=200,
+        )
+
+    @action(detail=False, methods=["GET"])
+    def followers(self, request):
+        web3_user = Web3User.objects.get(user=request.user)
+        follower_list = [
+            follower.ethereum_address for follower in web3_user.followers.all()
+        ]
+
+        return Response(
+            {"message": "User followers list", "data": follower_list}, status=200
+        )
+
+    @action(detail=False, methods=["GET"])
+    def following(self, request):
+        web3_user = Web3User.objects.get(user=request.user)
+        following_list = [
+            following.ethereum_address for following in web3_user.following.all()
+        ]
+
+        return Response(
+            {"message": "User following list", "data": following_list}, status=200
+        )
+
+    @action(detail=False, methods=["POST"])
+    def follow(self, request):
+        web3_user = Web3User.objects.get(user=request.user)
+        address = request.data.get("address")
+        try:
+            user_to_follow = Web3User.objects.get(ethereum_address=address)
+        except Web3User.DoesNotExist:
+            return Response(
+                {"message": "User not found."},
+                status=404,
+            )
+
+        web3_user.following.add(user_to_follow)
+        web3_user.save()
+
+        return Response(
+            {"message": "User followed successfully."},
             status=200,
         )

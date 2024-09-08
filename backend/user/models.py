@@ -6,3 +6,6 @@ from django.contrib.auth.models import User
 class Web3User(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     ethereum_address = models.CharField(max_length=42, unique=True)
+    following = models.ManyToManyField(
+        "self", related_name="followers", symmetrical=False, blank=True
+    )

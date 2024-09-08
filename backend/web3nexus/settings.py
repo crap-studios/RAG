@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "user",
+    "post",
 ]
 
 MIDDLEWARE = [
@@ -79,6 +80,13 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "web3nexus.wsgi.application"
+
+IMAGEGEN_RPC_URL = os.getenv("IMAGEGEN_RPC_URL")
+IMAGEGEN_CONTRACT_NAME = os.getenv("IMAGEGEN_CONTRACT_NAME")
+IMAGEGEN_CONTRACT_ADDRESS = os.getenv("IMAGEGEN_CONTRACT_ADDRESS")
+GROQCHATGPT_RPC_URL = os.getenv("GROQCHATGPT_RPC_URL")
+GROQCHATGPT_CONTRACT_NAME = os.getenv("GROQCHATGPT_CONTRACT_NAME")
+GROQCHATGPT_CONTRACT_ADDRESS = os.getenv("GROQCHATGPT_CONTRACT_ADDRESS")
 
 
 # Database
